@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kantin Digital Sekolah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .dashboard-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+        .order-card-grid {
+             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        }
+        .tab-btn.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Halaman Login -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            <div class="text-center">
+                <i class="fa-solid fa-store text-5xl text-blue-600"></i>
+                <h1 class="text-3xl font-bold mt-4">Kantin Digital Sekolah</h1>
+                <p class="text-gray-500">Silakan masuk sesuai peran Anda</p>
+            </div>
+            
+            <!-- Login Tabs -->
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-6" id="login-tabs">
+                    <button data-role="student" class="tab-btn active py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Siswa</button>
+                    <button data-role="seller" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Penjual</button>
+                    <button data-role="admin" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Admin</button>
+                </nav>
+            </div>
+
+            <form id="login-form" class="space-y-6">
+                <input type="hidden" id="login-role" value="student">
+                <div>
+                    <label for="username" class="text-sm font-medium">Username</label>
+                    <input type="text" id="username" name="username" required
+                        class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Masukkan username Anda">
+                </div>
+                <div>
+                    <label for="password" class="text-sm font-medium">Password</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Masukkan password Anda">
+                </div>
+                 <p id="login-error" class="text-sm text-red-500 text-center hidden">Username, password, atau peran salah!</p>
+                <button type="submit"
+                    class="w-full py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-transform transform hover:scale-105">
+                    Masuk
+                </button>
+            </form>
+             <!-- Div akun demo dihapus -->
+        </div>
+    </div>
+
+    <!-- Konten Aplikasi Utama -->
+    <div id="app-content" class="hidden">
+        <header class="bg-white shadow-md sticky top-0 z-10">
+            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-store text-2xl text-blue-600"></i>
+                    <h1 class="text-xl font-bold">Kantin Digital Sekolah</h1>
+                </div>
+                <div>
+                    <span id="welcome-message" class="mr-4 font-medium"></span>
+                    <button id="logout-btn" class="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-6">
+            <!-- Dashboard Admin -->
+            <div id="admin-dashboard" class="hidden">
+                <h2 class="text-3xl font-bold mb-6">Dashboard Admin</h2>
+                 <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-2">Total Pengguna</h3>
+                        <p id="admin-total-users" class="text-3xl font-bold text-blue-600"></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-2">Total Menu Makanan</h3>
+                        <p id="admin-total-menu" class="text-3xl font-bold text-green-600"></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-2">Total Pesanan</h3>
+                        <p id="admin-total-orders" class="text-3xl font-bold text-yellow-600"></p>
+                    </div>
+                </div>
+                
+                <!-- User Management -->
+                <div id="user-management" class="mt-8 bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4">Kelola Pengguna</h3>
+                    <!-- Add User Form -->
+                    <form id="add-user-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="md:col-span-1">
+                            <label for="new-username" class="text-sm font-medium">Username Baru</label>
+                            <input type="text" id="new-username" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label for="new-password" class="text-sm font-medium">Password Baru</label>
+                            <input type="text" id="new-password" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
+                        </div>
+                         <div class="md:col-span-1">
+                            <label for="new-role" class="text-sm font-medium">Peran</label>
+                            <select id="new-role" class="w-full mt-1 px-3 py-2 border rounded-lg bg-white">
+                                <option value="student">Siswa</option>
+                                <option value="seller">Penjual</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tambah Pengguna</button>
+                        </div>
+                    </form>
+                    
+                    <!-- User List Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Username</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Peran</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Password</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-list-table">
+                                <!-- User rows will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                 <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4">Semua Pesanan</h3>
+                    <div id="admin-orders-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Penjual -->
+            <div id="seller-dashboard" class="hidden">
+                <h2 class="text-3xl font-bold mb-6">Dashboard Penjual</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <h3 class="text-2xl font-semibold mb-4">Kelola Pesanan Masuk</h3>
+                        <div id="seller-orders-list" class="order-card-grid gap-4"></div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24">
+                            <h3 class="text-2xl font-semibold mb-4">Tambah Menu Baru</h3>
+                            <form id="add-menu-form" class="space-y-4">
+                                <div>
+                                    <label for="menu-name" class="text-sm font-medium">Nama Menu</label>
+                                    <input type="text" id="menu-name" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="menu-price" class="text-sm font-medium">Harga (Rp)</label>
+                                    <input type="number" id="menu-price" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="menu-stock" class="text-sm font-medium">Stok</label>
+                                    <input type="number" id="menu-stock" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="menu-image" class="text-sm font-medium">URL Gambar</label>
+                                    <input type="text" id="menu-image" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="https://placehold.co/..." required>
+                                </div>
+                                <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tambah Menu</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                 <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4">Daftar Menu Anda</h3>
+                    <div id="seller-menu-list" class="dashboard-grid gap-6"></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Siswa -->
+            <div id="student-dashboard" class="hidden">
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                     <div class="lg:col-span-2">
+                        <h2 class="text-3xl font-bold mb-6">Pilih Menu Hari Ini</h2>
+                        <div id="menu-list" class="dashboard-grid gap-6">
+                            <!-- Kartu menu akan dirender di sini -->
+                        </div>
+                     </div>
+                      <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24">
+                            <h3 class="text-2xl font-semibold mb-4 flex items-center"><i class="fa-solid fa-cart-shopping mr-3"></i>Keranjang Anda</h3>
+                            <div id="cart-items" class="space-y-4 max-h-60 overflow-y-auto pr-2"></div>
+                            <div id="cart-empty" class="text-center py-8 text-gray-500">
+                                <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
+                                <p>Keranjang masih kosong</p>
+                            </div>
+                            <div id="cart-summary" class="hidden mt-6 pt-4 border-t">
+                                <div class="flex justify-between font-bold text-lg mb-4">
+                                    <span>Total:</span>
+                                    <span id="cart-total">Rp 0</span>
+                                </div>
+                                <div>
+                                    <label for="order-notes" class="text-sm font-medium">Catatan Pesanan (opsional)</label>
+                                    <textarea id="order-notes" rows="2" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="Contoh: Jangan pakai saus"></textarea>
+                                </div>
+                                <div class="mt-4">
+                                      <label class="text-sm font-medium">Opsi Pengambilan</label>
+                                      <div class="flex space-x-4 mt-2">
+                                           <label class="flex items-center">
+                                               <input type="radio" name="delivery-option" value="Diambil" class="form-radio" checked>
+                                               <span class="ml-2">Diambil Sendiri</span>
+                                           </label>
+                                           <label class="flex items-center">
+                                               <input type="radio" name="delivery-option" value="Diantar" class="form-radio">
+                                               <span class="ml-2">Diantar ke Kelas</span>
+                                           </label>
+                                      </div>
+                                </div>
+                                <button id="checkout-btn" class="w-full mt-4 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105">
+                                    Pesan Sekarang
+                                </button>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+                 <div class="mt-12">
+                    <h2 class="text-3xl font-bold mb-6">Riwayat Pesanan Anda</h2>
+                    <div id="order-history" class="space-y-4"></div>
+                     <div id="no-order-history" class="text-center py-8 text-gray-500 bg-white rounded-xl shadow-lg">
+                        <p>Anda belum pernah memesan.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // === STATE MANAGEMENT ===
+    // Menggunakan localStorage untuk persistensi data sederhana
+    const loadState = (key, defaultValue) => {
+        const stored = localStorage.getItem(key);
+        try {
+            return stored ? JSON.parse(stored) : defaultValue;
+        } catch (e) {
+            console.error("Gagal memuat state", e);
+            return defaultValue;
+        }
+    };
+
+    const saveState = (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value));
+    };
+
+    const state = {
+        currentUser: loadState('currentUser', null),
+        users: loadState('users', {
+            'user': { password: 'user123', role: 'student' },
+            'penjual': { password: 'penjual123', role: 'seller' },
+            'admin': { password: 'admin123', role: 'admin' },
+            'budi': { password: 'budi123', role: 'student' },
+            'warungbuida': { password: 'ida123', role: 'seller' }
+        }),
+        menu: loadState('menu', [
+            { id: 1, name: 'Nasi Goreng Spesial', price: 15000, stock: 20, image: 'https://placehold.co/600x400/f8b400/FFF?text=Nasi+Goreng', seller: 'penjual' },
+            { id: 2, name: 'Mie Ayam Bakso', price: 12000, stock: 25, image: 'https://placehold.co/600x400/8B4513/FFF?text=Mie+Ayam', seller: 'penjual' },
+            { id: 3, name: 'Soto Ayam Lamongan', price: 10000, stock: 15, image: 'https://placehold.co/600x400/FFD700/333?text=Soto+Ayam', seller: 'penjual' },
+            { id: 4, name: 'Es Teh Manis', price: 3000, stock: 50, image: 'https://placehold.co/600x400/00CED1/FFF?text=Es+Teh', seller: 'warungbuida' },
+            { id: 5, name: 'Ayam Geprek', price: 18000, stock: 30, image: 'https://placehold.co/600x400/DC143C/FFF?text=Ayam+Geprek', seller: 'warungbuida' }
+        ]),
+        cart: loadState('cart', {}), // { itemId: quantity }
+        orders: loadState('orders', []) // { id, user, items: [{...menuItem, quantity}], total, status, notes, deliveryOption }
+    };
+
+    // === DOM SELECTORS ===
+    const loginPage = document.getElementById('login-page');
+    const appContent = document.getElementById('app-content');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const loginTabs = document.getElementById('login-tabs');
+    const loginRoleInput = document.getElementById('login-role');
+    const logoutBtn = document.getElementById('logout-btn');
+    const welcomeMessage = document.getElementById('welcome-message');
+
+    const adminDashboard = document.getElementById('admin-dashboard');
+    const sellerDashboard = document.getElementById('seller-dashboard');
+    const studentDashboard = document.getElementById('student-dashboard');
+
+    const menuList = document.getElementById('menu-list');
+    const cartItems = document.getElementById('cart-items');
+    const cartEmpty = document.getElementById('cart-empty');
+    const cartSummary = document.getElementById('cart-summary');
+    const cartTotal = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const orderHistory = document.getElementById('order-history');
+    const noOrderHistory = document.getElementById('no-order-history');
+    
+    const addMenuForm = document.getElementById('add-menu-form');
+    const sellerOrdersList = document.getElementById('seller-orders-list');
+    const sellerMenuList = document.getElementById('seller-menu-list');
+
+    const adminTotalUsers = document.getElementById('admin-total-users');
+    const adminTotalMenu = document.getElementById('admin-total-menu');
+    const adminTotalOrders = document.getElementById('admin-total-orders');
+    const adminOrdersList = document.getElementById('admin-orders-list');
+    const userListTable = document.getElementById('user-list-table');
+    const addUserForm = document.getElementById('add-user-form');
+    
+    // === RENDER FUNCTIONS ===
+    const formatCurrency = (amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+
+    const render = () => {
+        if (!state.currentUser) {
+            loginPage.style.display = 'flex';
+            appContent.style.display = 'none';
+            saveState('currentUser', null);
+            saveState('cart', {}); // Hapus keranjang saat logout
+            return;
+        }
+
+        loginPage.style.display = 'none';
+        appContent.style.display = 'block';
+        welcomeMessage.textContent = Selamat Datang, ${state.currentUser.username}!;
+
+        adminDashboard.style.display = 'none';
+        sellerDashboard.style.display = 'none';
+        studentDashboard.style.display = 'none';
+
+        switch (state.currentUser.role) {
+            case 'admin':
+                adminDashboard.style.display = 'block';
+                renderAdminDashboard();
+                break;
+            case 'seller':
+                sellerDashboard.style.display = 'block';
+                renderSellerDashboard();
+                break;
+            case 'student':
+                studentDashboard.style.display = 'block';
+                renderStudentDashboard();
+                break;
+        }
+    };
+
+    const renderStudentDashboard = () => {
+        // Render Menu List
+        menuList.innerHTML = '';
+        state.menu.forEach(item => {
+            const isOutOfStock = item.stock <= 0;
+            const card = document.createElement('div');
+            card.className = bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 ${isOutOfStock ? 'opacity-50' : ''};
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.src='https://placehold.co/600x400/E0E0E0/777?text=Gambar+Error'">
+                <div class="p-4">
+                    <h3 class="font-bold text-lg">${item.name}</h3>
+                    <p class="text-blue-600 font-semibold">${formatCurrency(item.price)}</p>
+                    <p class="text-sm text-gray-500">Stok: ${item.stock} | Penjual: ${item.seller}</p>
+                    <button data-id="${item.id}" class="add-to-cart-btn w-full mt-3 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" ${isOutOfStock ? 'disabled' : ''}>
+                        ${isOutOfStock ? 'Stok Habis' : '<i class="fa-solid fa-cart-plus mr-2"></i>Tambah'}
+                    </button>
+                </div>
+            `;
+            menuList.appendChild(card);
+        });
+        renderCart();
+        renderOrderHistory();
+    };
+
+    const renderCart = () => {
+        const cartKeys = Object.keys(state.cart);
+        if (cartKeys.length === 0) {
+            cartItems.innerHTML = '';
+            cartEmpty.style.display = 'block';
+            cartSummary.style.display = 'none';
+            return;
+        }
+
+        cartEmpty.style.display = 'none';
+        cartSummary.style.display = 'block';
+        cartItems.innerHTML = '';
+        let total = 0;
+
+        cartKeys.forEach(itemId => {
+            const item = state.menu.find(m => m.id == itemId);
+            if (!item) {
+                // Hapus item dari keranjang jika tidak ada di menu (mungkin dihapus oleh admin/penjual)
+                delete state.cart[itemId];
+                saveState('cart', state.cart);
+                return;
+            }
+            const quantity = state.cart[itemId];
+            total += item.price * quantity;
+
+            const cartItemEl = document.createElement('div');
+            cartItemEl.className = 'flex items-center justify-between';
+            cartItemEl.innerHTML = `
+                <div>
+                    <p class="font-semibold">${item.name}</p>
+                    <p class="text-sm text-gray-600">${formatCurrency(item.price)}</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button data-id="${itemId}" data-change="-1" class="cart-quantity-btn w-6 h-6 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
+                    <span>${quantity}</span>
+                    <button data-id="${itemId}" data-change="1" class="cart-quantity-btn w-6 h-6 bg-gray-200 rounded-full font-bold hover:bg-gray-300">+</button>
+                </div>
+            `;
+            cartItems.appendChild(cartItemEl);
+        });
+
+        cartTotal.textContent = formatCurrency(total);
+    };
+    
+    const renderOrderHistory = () => {
+        const userOrders = state.orders.filter(o => o.user === state.currentUser.username);
+        if (userOrders.length === 0) {
+            orderHistory.innerHTML = '';
+            noOrderHistory.style.display = 'block';
+            return;
+        }
+        
+        noOrderHistory.style.display = 'none';
+        orderHistory.innerHTML = '';
+        userOrders.slice().reverse().forEach(order => {
+            const statusColor = order.status === 'Selesai' ? 'bg-green-100 text-green-800' : (order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800');
+            const orderEl = document.createElement('div');
+            orderEl.className = 'bg-white p-4 rounded-xl shadow-lg';
+            orderEl.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold">Pesanan #${order.id}</p>
+                        <p class="text-sm text-gray-500">${new Date(order.timestamp).toLocaleString('id-ID')}</p>
+                        <p class="text-sm mt-1">Opsi: <strong>${order.deliveryOption}</strong></p>
+                    </div>
+                    <span class="text-sm font-bold px-3 py-1 rounded-full ${statusColor}">${order.status}</span>
+                </div>
+                <div class="mt-3 border-t pt-3">
+                    ${order.items.map(item => `
+                        <div class="flex justify-between text-sm">
+                            <span>${item.name} (x${item.quantity})</span>
+                            <span>${formatCurrency(item.price * item.quantity)}</span>
+                        </div>
+                    `).join('')}
+                    <div class="flex justify-between font-bold mt-2">
+                        <span>Total</span>
+                        <span>${formatCurrency(order.total)}</span>
+                    </div>
+                     ${order.notes ? <div class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"><strong>Catatan:</strong> ${order.notes}</div> : ''}
+                </div>
+            `;
+            orderHistory.appendChild(orderEl);
+        });
+    };
+
+    const renderSellerDashboard = () => {
+        const seller = state.currentUser.username;
+        // Render Orders for Seller
+        sellerOrdersList.innerHTML = '';
+        const sellerOrders = state.orders.filter(order => order.items.some(item => item.seller === seller));
+        if (sellerOrders.length === 0) {
+            sellerOrdersList.innerHTML = <p class="text-gray-500 lg:col-span-2">Belum ada pesanan masuk.</p>;
+        } else {
+             sellerOrders.slice().reverse().forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl shadow-lg space-y-2';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold">Pesanan #${order.id}</h4>
+                        <span class="text-sm font-semibold">${order.status}</span>
+                    </div>
+                    <p class="text-sm">Pemesan: ${order.user}</p>
+                    <p class="text-sm">Opsi: <strong>${order.deliveryOption}</strong></p>
+                    <div class="border-t pt-2">
+                        ${order.items.filter(i => i.seller === seller).map(item => `
+                            <p class="text-sm">${item.name} x ${item.quantity}</p>
+                        `).join('')}
+                    </div>
+                    ${order.notes ? <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"><strong>Catatan:</strong> ${order.notes}</div> : ''}
+                    ${order.status === 'Diproses' ? `
+                    <div class="flex space-x-2 mt-2">
+                        <button data-id="${order.id}" data-status="Selesai" class="update-status-btn w-full text-sm py-1 font-semibold text-white bg-green-500 rounded-lg hover:bg-green-600">Selesaikan</button>
+                    </div>
+                    ` : <p class="text-sm text-green-600 font-semibold mt-2">Pesanan sudah selesai.</p>}
+                `;
+                sellerOrdersList.appendChild(card);
+            });
+        }
+        
+        // Render Seller's Menu List
+        sellerMenuList.innerHTML = '';
+        const sellerMenus = state.menu.filter(item => item.seller === seller);
+        sellerMenus.forEach(item => {
+            const menuCard = document.createElement('div');
+            menuCard.className = 'bg-white p-4 rounded-xl shadow-lg flex flex-col';
+            menuCard.innerHTML = `
+                <img src="${item.image}" class="w-full h-32 object-cover rounded-lg mb-2" onerror="this.src='https://placehold.co/600x400/E0E0E0/777?text=Gambar+Error'">
+                <h4 class="font-bold">${item.name}</h4>
+                <div class="mt-2 flex-grow space-y-2">
+                     <div>
+                        <label for="price-${item.id}" class="text-xs font-medium">Harga (Rp)</label>
+                        <input type="number" id="price-${item.id}" value="${item.price}" class="w-full border rounded px-2 py-1 text-sm">
+                     </div>
+                     <div>
+                        <label for="stock-${item.id}" class="text-xs font-medium">Stok</label>
+                        <input type="number" id="stock-${item.id}" value="${item.stock}" class="w-full border rounded px-2 py-1 text-sm">
+                     </div>
+                </div>
+                <button data-id="${item.id}" class="update-menu-btn w-full mt-3 py-1.5 text-sm font-semibold bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Update Menu</button>
+            `;
+            sellerMenuList.appendChild(menuCard);
+        });
+    };
+    
+    const renderAdminDashboard = () => {
+        adminTotalUsers.textContent = Object.keys(state.users).length;
+        adminTotalMenu.textContent = state.menu.length;
+        adminTotalOrders.textContent = state.orders.length;
+        
+        adminOrdersList.innerHTML = '';
+        if (state.orders.length === 0) {
+            adminOrdersList.innerHTML = '<p class="text-gray-500">Belum ada pesanan.</p>';
+        } else {
+            [...state.orders].reverse().forEach(order => {
+                const statusColor = order.status === 'Selesai' ? 'bg-green-100 text-green-800' : (order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800');
+                const orderEl = document.createElement('div');
+                orderEl.className = 'bg-gray-50 p-3 rounded-lg';
+                orderEl.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-bold">Pesanan #${order.id} oleh ${order.user}</p>
+                            <p class="text-xs text-gray-500">${new Date(order.timestamp).toLocaleString('id-ID')}</p>
+                        </div>
+                         <span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${order.status}</span>
+                    </div>
+                    <p class="text-sm mt-1">Total: ${formatCurrency(order.total)}</p>
+                `;
+                adminOrdersList.appendChild(orderEl);
+            });
+        }
+        renderUserManagement();
+    };
+
+    const renderUserManagement = () => {
+        userListTable.innerHTML = '';
+        for (const username in state.users) {
+            if (username === 'admin') continue; // Admin cannot manage their own account
+            const user = state.users[username];
+            const row = document.createElement('tr');
+            row.className = 'border-b';
+            row.innerHTML = `
+                <td class="py-3 px-4">${username}</td>
+                <td class="py-3 px-4 capitalize">${user.role}</td>
+                <td class="py-3 px-4">
+                    <input type="text" id="password-${username}" value="${user.password}" class="w-full border rounded px-2 py-1 text-sm">
+                </td>
+                <td class="py-3 px-4 flex space-x-2">
+                    <button data-username="${username}" class="update-user-btn text-sm py-1 px-3 bg-blue-500 text-white rounded hover:bg-blue-600">Update</button>
+                    <button data-username="${username}" class="delete-user-btn text-sm py-1 px-3 bg-red-500 text-white rounded hover:bg-red-600">Hapus</button>
+                </td>
+            `;
+            userListTable.appendChild(row);
+        }
+    };
+
+    // === EVENT LISTENERS & HANDLERS ===
+    loginTabs.addEventListener('click', (e) => {
+        if(e.target.matches('.tab-btn')) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            loginRoleInput.value = e.target.dataset.role;
+        }
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = e.target.username.value;
+        const password = e.target.password.value;
+        const role = loginRoleInput.value;
+        const user = state.users[username];
+
+        if (user && user.password === password && user.role === role) {
+            state.currentUser = { username, role: user.role };
+            loginError.classList.add('hidden');
+            loginForm.reset();
+            // Kembalikan tab ke Siswa
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn[data-role="student"]').classList.add('active');
+            loginRoleInput.value = 'student';
+            
+            saveState('currentUser', state.currentUser);
+            // Muat keranjang pengguna jika ada, atau reset
+            state.cart = loadState(cart_${username}, {}); 
+            saveState('cart', state.cart); // Simpan state keranjang saat ini
+            
+            render();
+        } else {
+            loginError.classList.remove('hidden');
+        }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        // Simpan keranjang pengguna sebelum logout
+        if (state.currentUser) {
+            saveState(cart_${state.currentUser.username}, state.cart);
+        }
+        state.currentUser = null;
+        state.cart = {};
+        render();
+    });
+
+    // --- Student Dashboard Listeners ---
+    menuList.addEventListener('click', (e) => {
+        if (e.target.matches('.add-to-cart-btn')) {
+            const id = e.target.dataset.id;
+            const item = state.menu.find(m => m.id == id);
+            
+            // Cek stok
+            const currentQuantityInCart = state.cart[id] || 0;
+            if (currentQuantityInCart >= item.stock) {
+                // Tampilkan pesan stok tidak cukup (bisa diganti modal)
+                console.warn("Stok tidak mencukupi");
+                return;
+            }
+
+            state.cart[id] = (state.cart[id] || 0) + 1;
+            saveState('cart', state.cart);
+            renderCart();
+        }
+    });
+
+    cartItems.addEventListener('click', (e) => {
+        if (e.target.matches('.cart-quantity-btn')) {
+            const id = e.target.dataset.id;
+            const change = parseInt(e.target.dataset.change, 10);
+            
+            if (change === 1) {
+                const item = state.menu.find(m => m.id == id);
+                const currentQuantityInCart = state.cart[id] || 0;
+                if (currentQuantityInCart < item.stock) {
+                    state.cart[id] = (state.cart[id] || 0) + 1;
+                } else {
+                    console.warn("Stok tidak mencukupi");
+                }
+            } else if (change === -1) {
+                state.cart[id] = (state.cart[id] || 0) - 1;
+                if (state.cart[id] <= 0) {
+                    delete state.cart[id];
+                }
+            }
+            saveState('cart', state.cart);
+            renderCart();
+        }
+    });
+
+    checkoutBtn.addEventListener('click', () => {
+        const orderItems = Object.keys(state.cart).map(id => {
+            const item = state.menu.find(m => m.id == id);
+            return { ...item, quantity: state.cart[id] };
+        });
+
+        const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        // Validasi stok
+        let isStockSufficient = true;
+        orderItems.forEach(orderItem => {
+            const menuItem = state.menu.find(m => m.id == orderItem.id);
+            if (orderItem.quantity > menuItem.stock) {
+                isStockSufficient = false;
+                console.error(Stok ${menuItem.name} tidak mencukupi.);
+                // Di aplikasi nyata, tampilkan pesan error ke pengguna
+            }
+        });
+
+        if (!isStockSufficient) {
+            alert("Maaf, stok untuk beberapa barang tidak mencukupi. Harap perbarui keranjang Anda.");
+            return;
+        }
+
+        // Kurangi stok
+        orderItems.forEach(orderItem => {
+            const menuItem = state.menu.find(m => m.id == orderItem.id);
+            menuItem.stock -= orderItem.quantity;
+        });
+        saveState('menu', state.menu);
+
+        const newOrder = {
+            id: Date.now(),
+            user: state.currentUser.username,
+            items: orderItems,
+            total: total,
+            status: 'Diproses', // Status awal
+            notes: document.getElementById('order-notes').value,
+            deliveryOption: document.querySelector('input[name="delivery-option"]:checked').value,
+            timestamp: new Date().toISOString()
+        };
+
+        state.orders.push(newOrder);
+        saveState('orders', state.orders);
+
+        state.cart = {};
+        saveState('cart', state.cart);
+        if (state.currentUser) {
+            saveState(cart_${state.currentUser.username}, state.cart); // Hapus keranjang tersimpan
+        }
+        
+        document.getElementById('order-notes').value = ''; // Kosongkan catatan
+        document.querySelector('input[name="delivery-option"][value="Diambil"]').checked = true; // Reset opsi
+
+        // Render ulang bagian siswa
+        renderStudentDashboard();
+    });
+
+
+    // --- Seller Dashboard Listeners ---
+    addMenuForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newMenu = {
+            id: Date.now(),
+            name: document.getElementById('menu-name').value,
+            price: parseInt(document.getElementById('menu-price').value, 10),
+            stock: parseInt(document.getElementById('menu-stock').value, 10),
+            image: document.getElementById('menu-image').value,
+            seller: state.currentUser.username
+        };
+        state.menu.push(newMenu);
+        saveState('menu', state.menu);
+        addMenuForm.reset();
+        renderSellerDashboard();
+    });
+
+    sellerOrdersList.addEventListener('click', (e) => {
+        if (e.target.matches('.update-status-btn')) {
+            const orderId = e.target.dataset.id;
+            const newStatus = e.target.dataset.status;
+            const order = state.orders.find(o => o.id == orderId);
+            if (order) {
+                order.status = newStatus;
+                saveState('orders', state.orders);
+                renderSellerDashboard();
+            }
+        }
+    });
+
+    sellerMenuList.addEventListener('click', (e) => {
+        if (e.target.matches('.update-menu-btn')) {
+            const itemId = e.target.dataset.id;
+            const item = state.menu.find(m => m.id == itemId);
+            if (item) {
+                const newPrice = document.getElementById(price-${itemId}).value;
+                const newStock = document.getElementById(stock-${itemId}).value;
+                
+                item.price = parseInt(newPrice, 10);
+                item.stock = parseInt(newStock, 10);
+                
+                saveState('menu', state.menu);
+                renderSellerDashboard();
+            }
+        }
+    });
+
+    // --- Admin Dashboard Listeners ---
+    addUserForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = document.getElementById('new-username').value;
+        const password = document.getElementById('new-password').value;
+        const role = document.getElementById('new-role').value;
+
+        if (state.users[username]) {
+            alert("Username sudah ada!");
+            return;
+        }
+
+        state.users[username] = { password, role };
+        saveState('users', state.users);
+        addUserForm.reset();
+        renderAdminDashboard();
+    });
+
+    userListTable.addEventListener('click', (e) => {
+        const username = e.target.dataset.username;
+        if (!username) return;
+
+        if (e.target.matches('.update-user-btn')) {
+            const newPassword = document.getElementById(password-${username}).value;
+            if (state.users[username]) {
+                state.users[username].password = newPassword;
+                saveState('users', state.users);
+                renderUserManagement(); // Cukup render tabel
+            }
+        }
+
+        if (e.target.matches('.delete-user-btn')) {
+            // Sebaiknya gunakan konfirmasi kustom, tapi untuk sekarang pakai confirm()
+            if (confirm(Yakin ingin menghapus pengguna ${username}?)) {
+                 if (state.users[username]) {
+                    delete state.users[username];
+                    saveState('users', state.users);
+                    renderAdminDashboard(); // Render ulang semua
+                }
+            }
+        }
+    });
+
+    // === INITIAL RENDER ===
+    render();
+});
+</script>
+
+</body>
+</html>
