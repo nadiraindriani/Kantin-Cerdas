@@ -3,44 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kantin Digital Sekolah</title>
+    <title>Kantin Digital Sekolah (Hybrid)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        .dashboard-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        }
-        .order-card-grid {
-             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        }
-        .tab-btn.active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
-            font-weight: 600;
-        }
+        body { font-family: 'Poppins', sans-serif; }
+        .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .order-card-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+        .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+        .toast { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        .toast.show { transform: translateX(0); }
+        /* Loading Overlay */
+        #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column;}
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
+        <p class="font-semibold text-gray-600">Memuat Aplikasi...</p>
+        <p id="loading-text" class="text-sm text-gray-500 mt-2">Mengecek koneksi database...</p>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <!-- Halaman Login -->
-    <div id="login-page" class="flex items-center justify-center min-h-screen">
+    <div id="login-page" class="flex items-center justify-center min-h-screen hidden">
         <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
             <div class="text-center">
                 <i class="fa-solid fa-store text-5xl text-blue-600"></i>
-                <h1 class="text-3xl font-bold mt-4">Kantin Digital Sekolah</h1>
-                <p class="text-gray-500">Silakan masuk sesuai peran Anda</p>
+                <h1 class="text-3xl font-bold mt-4">Kantin Digital</h1>
+                <div id="connection-status" class="mt-2 inline-block px-3 py-1 rounded-full text-xs font-bold bg-gray-200 text-gray-600">
+                    Memeriksa Koneksi...
+                </div>
             </div>
             
             <!-- Login Tabs -->
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-6" id="login-tabs">
-                    <button data-role="student" class="tab-btn active py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Siswa</button>
-                    <button data-role="seller" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Penjual</button>
-                    <button data-role="admin" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Admin</button>
+                    <button data-role="student" class="tab-btn active py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 w-1/3 text-center">Siswa</button>
+                    <button data-role="seller" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 w-1/3 text-center">Penjual</button>
+                    <button data-role="admin" class="tab-btn py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 w-1/3 text-center">Admin</button>
                 </nav>
             </div>
 
@@ -48,23 +58,23 @@
                 <input type="hidden" id="login-role" value="student">
                 <div>
                     <label for="username" class="text-sm font-medium">Username</label>
-                    <input type="text" id="username" name="username" required
-                        class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Masukkan username Anda">
+                    <input type="text" id="username" name="username" required class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Contoh: budi">
                 </div>
                 <div>
                     <label for="password" class="text-sm font-medium">Password</label>
-                    <input type="password" id="password" name="password" required
-                        class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Masukkan password Anda">
+                    <input type="password" id="password" name="password" required class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Contoh: budi123">
                 </div>
-                 <p id="login-error" class="text-sm text-red-500 text-center hidden">Username, password, atau peran salah!</p>
-                <button type="submit"
-                    class="w-full py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-transform transform hover:scale-105">
-                    Masuk
-                </button>
+                <button type="submit" class="w-full py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Masuk</button>
             </form>
-             <!-- Div akun demo dihapus -->
+            
+            <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-800">
+                <p class="font-bold mb-1">Akun Demo (Offline Mode):</p>
+                <ul class="list-disc ml-4 space-y-1">
+                    <li>Siswa: <b>budi</b> / budi123</li>
+                    <li>Penjual: <b>warungbuida</b> / ida123</li>
+                    <li>Admin: <b>admin</b> / admin123</li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -74,10 +84,13 @@
             <div class="container mx-auto px-6 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-store text-2xl text-blue-600"></i>
-                    <h1 class="text-xl font-bold">Kantin Digital Sekolah</h1>
+                    <div>
+                        <h1 class="text-xl font-bold hidden md:block leading-none">Kantin Digital</h1>
+                        <span id="app-mode-badge" class="text-[10px] px-2 py-0.5 bg-gray-200 rounded-full text-gray-600 uppercase font-bold">Offline Mode</span>
+                    </div>
                 </div>
-                <div>
-                    <span id="welcome-message" class="mr-4 font-medium"></span>
+                <div class="flex items-center">
+                    <span id="welcome-message" class="mr-4 font-medium text-sm md:text-base"></span>
                     <button id="logout-btn" class="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">
                         <i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
                     </button>
@@ -85,72 +98,61 @@
             </div>
         </header>
 
-        <main class="container mx-auto p-6">
+        <main class="container mx-auto p-4 md:p-6">
             <!-- Dashboard Admin -->
             <div id="admin-dashboard" class="hidden">
                 <h2 class="text-3xl font-bold mb-6">Dashboard Admin</h2>
-                 <!-- Stats -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="font-bold text-lg mb-2">Total Pengguna</h3>
-                        <p id="admin-total-users" class="text-3xl font-bold text-blue-600"></p>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                        <h3 class="font-bold text-gray-600">Total Pengguna</h3>
+                        <p id="admin-total-users" class="text-3xl font-bold text-blue-600">...</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="font-bold text-lg mb-2">Total Menu Makanan</h3>
-                        <p id="admin-total-menu" class="text-3xl font-bold text-green-600"></p>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                        <h3 class="font-bold text-gray-600">Total Menu</h3>
+                        <p id="admin-total-menu" class="text-3xl font-bold text-green-600">...</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="font-bold text-lg mb-2">Total Pesanan</h3>
-                        <p id="admin-total-orders" class="text-3xl font-bold text-yellow-600"></p>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-gray-600">Total Pesanan</h3>
+                        <p id="admin-total-orders" class="text-3xl font-bold text-yellow-600">...</p>
                     </div>
                 </div>
                 
-                <!-- User Management -->
-                <div id="user-management" class="mt-8 bg-white p-6 rounded-xl shadow-lg">
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
                     <h3 class="font-bold text-xl mb-4">Kelola Pengguna</h3>
-                    <!-- Add User Form -->
-                    <form id="add-user-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6 p-4 bg-gray-50 rounded-lg">
+                    <form id="add-user-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6 p-4 bg-gray-50 rounded-lg border">
                         <div class="md:col-span-1">
-                            <label for="new-username" class="text-sm font-medium">Username Baru</label>
+                            <label class="text-sm font-medium">Username Baru</label>
                             <input type="text" id="new-username" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
                         </div>
                         <div class="md:col-span-1">
-                            <label for="new-password" class="text-sm font-medium">Password Baru</label>
+                            <label class="text-sm font-medium">Password</label>
                             <input type="text" id="new-password" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
                         </div>
                          <div class="md:col-span-1">
-                            <label for="new-role" class="text-sm font-medium">Peran</label>
+                            <label class="text-sm font-medium">Peran</label>
                             <select id="new-role" class="w-full mt-1 px-3 py-2 border rounded-lg bg-white">
                                 <option value="student">Siswa</option>
                                 <option value="seller">Penjual</option>
                             </select>
                         </div>
-                        <div class="md:col-span-1">
-                            <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tambah Pengguna</button>
-                        </div>
+                        <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tambah</button>
                     </form>
-                    
-                    <!-- User List Table -->
                     <div class="overflow-x-auto">
                         <table class="min-w-full bg-white">
-                            <thead class="bg-gray-200">
+                            <thead class="bg-gray-200 text-gray-600">
                                 <tr>
-                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Username</th>
-                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Peran</th>
-                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Password</th>
-                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Aksi</th>
+                                    <th class="text-left py-3 px-4 text-sm">Username</th>
+                                    <th class="text-left py-3 px-4 text-sm">Peran</th>
+                                    <th class="text-left py-3 px-4 text-sm">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="user-list-table">
-                                <!-- User rows will be injected here -->
-                            </tbody>
+                            <tbody id="user-list-table" class="text-gray-700"></tbody>
                         </table>
                     </div>
                 </div>
-
-                 <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
                     <h3 class="font-bold text-xl mb-4">Semua Pesanan</h3>
-                    <div id="admin-orders-list" class="space-y-4"></div>
+                    <div id="admin-orders-list" class="space-y-4 max-h-96 overflow-y-auto"></div>
                 </div>
             </div>
 
@@ -159,91 +161,63 @@
                 <h2 class="text-3xl font-bold mb-6">Dashboard Penjual</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2">
-                        <h3 class="text-2xl font-semibold mb-4">Kelola Pesanan Masuk</h3>
-                        <div id="seller-orders-list" class="order-card-grid gap-4"></div>
+                        <h3 class="text-2xl font-semibold mb-4">Pesanan Masuk</h3>
+                        <div id="seller-orders-list" class="order-card-grid gap-4 grid"></div>
                     </div>
                     <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24">
-                            <h3 class="text-2xl font-semibold mb-4">Tambah Menu Baru</h3>
+                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24 border">
+                            <h3 class="text-2xl font-semibold mb-4">Tambah Menu</h3>
                             <form id="add-menu-form" class="space-y-4">
-                                <div>
-                                    <label for="menu-name" class="text-sm font-medium">Nama Menu</label>
-                                    <input type="text" id="menu-name" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="menu-price" class="text-sm font-medium">Harga (Rp)</label>
-                                    <input type="number" id="menu-price" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="menu-stock" class="text-sm font-medium">Stok</label>
-                                    <input type="number" id="menu-stock" class="w-full mt-1 px-3 py-2 border rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="menu-image" class="text-sm font-medium">URL Gambar</label>
-                                    <input type="text" id="menu-image" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="https://placehold.co/..." required>
-                                </div>
-                                <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tambah Menu</button>
+                                <input type="text" id="menu-name" class="w-full px-3 py-2 border rounded-lg" placeholder="Nama Menu" required>
+                                <input type="number" id="menu-price" class="w-full px-3 py-2 border rounded-lg" placeholder="Harga" required>
+                                <input type="number" id="menu-stock" class="w-full px-3 py-2 border rounded-lg" placeholder="Stok" required>
+                                <input type="text" id="menu-image" class="w-full px-3 py-2 border rounded-lg" placeholder="URL Gambar" required>
+                                <button type="submit" class="w-full py-2 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700">Tambah</button>
                             </form>
                         </div>
                     </div>
                 </div>
                  <div class="mt-8 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 class="font-bold text-xl mb-4">Daftar Menu Anda</h3>
-                    <div id="seller-menu-list" class="dashboard-grid gap-6"></div>
+                    <h3 class="font-bold text-xl mb-4">Menu Anda</h3>
+                    <div id="seller-menu-list" class="dashboard-grid gap-6 grid"></div>
                 </div>
             </div>
 
             <!-- Dashboard Siswa -->
             <div id="student-dashboard" class="hidden">
                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                     <div class="lg:col-span-2">
-                        <h2 class="text-3xl font-bold mb-6">Pilih Menu Hari Ini</h2>
-                        <div id="menu-list" class="dashboard-grid gap-6">
-                            <!-- Kartu menu akan dirender di sini -->
-                        </div>
-                     </div>
-                      <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24">
-                            <h3 class="text-2xl font-semibold mb-4 flex items-center"><i class="fa-solid fa-cart-shopping mr-3"></i>Keranjang Anda</h3>
+                      <div class="lg:col-span-2">
+                        <h2 class="text-3xl font-bold mb-6">Menu Hari Ini</h2>
+                        <div id="menu-list" class="dashboard-grid gap-6 grid"></div>
+                      </div>
+                       <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-24 border-t-4 border-blue-500">
+                            <h3 class="text-2xl font-semibold mb-4 flex items-center"><i class="fa-solid fa-cart-shopping mr-3 text-blue-600"></i>Keranjang</h3>
                             <div id="cart-items" class="space-y-4 max-h-60 overflow-y-auto pr-2"></div>
                             <div id="cart-empty" class="text-center py-8 text-gray-500">
-                                <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
-                                <p>Keranjang masih kosong</p>
+                                <i class="fa-solid fa-cart-arrow-down text-4xl mb-2 text-gray-300"></i>
+                                <p>Kosong</p>
                             </div>
                             <div id="cart-summary" class="hidden mt-6 pt-4 border-t">
                                 <div class="flex justify-between font-bold text-lg mb-4">
                                     <span>Total:</span>
-                                    <span id="cart-total">Rp 0</span>
+                                    <span id="cart-total" class="text-blue-600">Rp 0</span>
                                 </div>
-                                <div>
-                                    <label for="order-notes" class="text-sm font-medium">Catatan Pesanan (opsional)</label>
-                                    <textarea id="order-notes" rows="2" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="Contoh: Jangan pakai saus"></textarea>
+                                <textarea id="order-notes" rows="2" class="w-full px-3 py-2 border rounded-lg resize-none mb-4" placeholder="Catatan (opsional)"></textarea>
+                                <div class="flex space-x-4 mb-4 bg-gray-50 p-2 rounded-lg">
+                                     <label class="flex items-center cursor-pointer"><input type="radio" name="delivery-option" value="Diambil" checked class="mr-2 text-blue-600"><span class="text-sm">Diambil</span></label>
+                                     <label class="flex items-center cursor-pointer"><input type="radio" name="delivery-option" value="Diantar" class="mr-2 text-blue-600"><span class="text-sm">Diantar</span></label>
                                 </div>
-                                <div class="mt-4">
-                                      <label class="text-sm font-medium">Opsi Pengambilan</label>
-                                      <div class="flex space-x-4 mt-2">
-                                           <label class="flex items-center">
-                                               <input type="radio" name="delivery-option" value="Diambil" class="form-radio" checked>
-                                               <span class="ml-2">Diambil Sendiri</span>
-                                           </label>
-                                           <label class="flex items-center">
-                                               <input type="radio" name="delivery-option" value="Diantar" class="form-radio">
-                                               <span class="ml-2">Diantar ke Kelas</span>
-                                           </label>
-                                      </div>
-                                </div>
-                                <button id="checkout-btn" class="w-full mt-4 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105">
-                                    Pesan Sekarang
-                                </button>
+                                <button id="checkout-btn" class="w-full py-3 font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-lg">Pesan Sekarang</button>
                             </div>
                         </div>
-                     </div>
+                      </div>
                 </div>
                  <div class="mt-12">
-                    <h2 class="text-3xl font-bold mb-6">Riwayat Pesanan Anda</h2>
+                    <h2 class="text-3xl font-bold mb-6">Riwayat Pesanan</h2>
                     <div id="order-history" class="space-y-4"></div>
-                     <div id="no-order-history" class="text-center py-8 text-gray-500 bg-white rounded-xl shadow-lg">
-                        <p>Anda belum pernah memesan.</p>
+                     <div id="no-order-history" class="text-center py-8 text-gray-500 bg-white rounded-xl shadow-lg hidden">
+                        <p>Belum ada pesanan.</p>
                     </div>
                 </div>
             </div>
@@ -251,575 +225,611 @@
     </div>
     
 <script>
+// === KONFIGURASI SUPABASE ===
+// Masukkan kredensial proyek Anda di sini jika ingin mode ONLINE.
+// Jika dibiarkan default/salah, aplikasi otomatis masuk mode OFFLINE (Demo).
+const supabaseUrl = 'https://csqsjffasibthxtxkzvw.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcXNqZmZhc2lidGh4dHhrenZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDQxNDcsImV4cCI6MjA3OTA4MDE0N30.woIaWBnUaZ_XpVkltLy1oxQdZqweAyVjfTJpBWhUp7M';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 document.addEventListener('DOMContentLoaded', () => {
-    // === STATE MANAGEMENT ===
-    // Menggunakan localStorage untuk persistensi data sederhana
-    const loadState = (key, defaultValue) => {
-        const stored = localStorage.getItem(key);
-        try {
-            return stored ? JSON.parse(stored) : defaultValue;
-        } catch (e) {
-            console.error("Gagal memuat state", e);
-            return defaultValue;
+    
+    // State Flag: Apakah kita pakai Supabase atau LocalStorage?
+    let isOfflineMode = false;
+
+    // --- Global UI Helpers ---
+    const showToast = (message, type = 'info') => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        let bgClass = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+
+        toast.className = `toast flex items-center w-full max-w-xs p-4 mb-4 text-white rounded-lg shadow ${bgClass}`;
+        toast.innerHTML = `<i class="fa-solid fa-${icon} mr-3 text-xl"></i><div class="text-sm font-normal">${message}</div>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 100);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+    };
+
+    const toggleLoading = (show, text) => {
+        const overlay = document.getElementById('loading-overlay');
+        if (text) document.getElementById('loading-text').textContent = text;
+        overlay.style.display = show ? 'flex' : 'none';
+    }
+
+    const updateConnectionStatus = (isOnline) => {
+        const statusEl = document.getElementById('connection-status');
+        const badgeEl = document.getElementById('app-mode-badge');
+        if (isOnline) {
+            statusEl.textContent = "Terhubung ke Supabase ✅";
+            statusEl.className = "mt-2 inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
+            badgeEl.textContent = "ONLINE MODE";
+            badgeEl.className = "text-[10px] px-2 py-0.5 bg-green-200 rounded-full text-green-800 uppercase font-bold";
+            isOfflineMode = false;
+        } else {
+            statusEl.textContent = "Mode Demo (Offline) ⚠️";
+            statusEl.className = "mt-2 inline-block px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700";
+            badgeEl.textContent = "OFFLINE MODE";
+            badgeEl.className = "text-[10px] px-2 py-0.5 bg-yellow-200 rounded-full text-yellow-800 uppercase font-bold";
+            isOfflineMode = true;
         }
     };
 
-    const saveState = (key, value) => {
-        localStorage.setItem(key, JSON.stringify(value));
+    // --- State Management ---
+    let state = {
+        currentUser: JSON.parse(localStorage.getItem('currentUser')) || null,
+        users: {}, 
+        menu: [],  
+        orders: [], 
+        cart: JSON.parse(localStorage.getItem('cart')) || {} 
     };
 
-    const state = {
-        currentUser: loadState('currentUser', null),
-        users: loadState('users', {
-            'user': { password: 'user123', role: 'student' },
-            'penjual': { password: 'penjual123', role: 'seller' },
-            'admin': { password: 'admin123', role: 'admin' },
-            'budi': { password: 'budi123', role: 'student' },
-            'warungbuida': { password: 'ida123', role: 'seller' }
-        }),
-        menu: loadState('menu', [
+    // --- DATA DUMMY (Untuk Mode Offline) ---
+    const dummyData = {
+        users: {
+            'user': { password: 'user123', role: 'student', username: 'user' },
+            'penjual': { password: 'penjual123', role: 'seller', username: 'penjual' },
+            'admin': { password: 'admin123', role: 'admin', username: 'admin' },
+            'budi': { password: 'budi123', role: 'student', username: 'budi' },
+            'warungbuida': { password: 'ida123', role: 'seller', username: 'warungbuida' }
+        },
+        menu: [
             { id: 1, name: 'Nasi Goreng Spesial', price: 15000, stock: 20, image: 'https://placehold.co/600x400/f8b400/FFF?text=Nasi+Goreng', seller: 'penjual' },
             { id: 2, name: 'Mie Ayam Bakso', price: 12000, stock: 25, image: 'https://placehold.co/600x400/8B4513/FFF?text=Mie+Ayam', seller: 'penjual' },
-            { id: 3, name: 'Soto Ayam Lamongan', price: 10000, stock: 15, image: 'https://placehold.co/600x400/FFD700/333?text=Soto+Ayam', seller: 'penjual' },
-            { id: 4, name: 'Es Teh Manis', price: 3000, stock: 50, image: 'https://placehold.co/600x400/00CED1/FFF?text=Es+Teh', seller: 'warungbuida' },
-            { id: 5, name: 'Ayam Geprek', price: 18000, stock: 30, image: 'https://placehold.co/600x400/DC143C/FFF?text=Ayam+Geprek', seller: 'warungbuida' }
-        ]),
-        cart: loadState('cart', {}), // { itemId: quantity }
-        orders: loadState('orders', []) // { id, user, items: [{...menuItem, quantity}], total, status, notes, deliveryOption }
+            { id: 3, name: 'Es Teh Manis', price: 3000, stock: 50, image: 'https://placehold.co/600x400/00CED1/FFF?text=Es+Teh', seller: 'warungbuida' }
+        ]
     };
 
-    // === DOM SELECTORS ===
-    const loginPage = document.getElementById('login-page');
-    const appContent = document.getElementById('app-content');
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-    const loginTabs = document.getElementById('login-tabs');
-    const loginRoleInput = document.getElementById('login-role');
-    const logoutBtn = document.getElementById('logout-btn');
-    const welcomeMessage = document.getElementById('welcome-message');
-
-    const adminDashboard = document.getElementById('admin-dashboard');
-    const sellerDashboard = document.getElementById('seller-dashboard');
-    const studentDashboard = document.getElementById('student-dashboard');
-
-    const menuList = document.getElementById('menu-list');
-    const cartItems = document.getElementById('cart-items');
-    const cartEmpty = document.getElementById('cart-empty');
-    const cartSummary = document.getElementById('cart-summary');
-    const cartTotal = document.getElementById('cart-total');
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const orderHistory = document.getElementById('order-history');
-    const noOrderHistory = document.getElementById('no-order-history');
+    // --- Core Functions ---
     
-    const addMenuForm = document.getElementById('add-menu-form');
-    const sellerOrdersList = document.getElementById('seller-orders-list');
-    const sellerMenuList = document.getElementById('seller-menu-list');
+    const loadLocalData = () => {
+        // Muat dari localStorage jika ada update offline sebelumnya, kalau tidak pakai dummy
+        state.users = JSON.parse(localStorage.getItem('offline_users')) || dummyData.users;
+        state.menu = JSON.parse(localStorage.getItem('offline_menu')) || dummyData.menu;
+        state.orders = JSON.parse(localStorage.getItem('offline_orders')) || [];
+        render();
+    };
 
-    const adminTotalUsers = document.getElementById('admin-total-users');
-    const adminTotalMenu = document.getElementById('admin-total-menu');
-    const adminTotalOrders = document.getElementById('admin-total-orders');
-    const adminOrdersList = document.getElementById('admin-orders-list');
-    const userListTable = document.getElementById('user-list-table');
-    const addUserForm = document.getElementById('add-user-form');
-    
-    // === RENDER FUNCTIONS ===
-    const formatCurrency = (amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+    const saveLocalData = () => {
+        if (isOfflineMode) {
+            localStorage.setItem('offline_users', JSON.stringify(state.users));
+            localStorage.setItem('offline_menu', JSON.stringify(state.menu));
+            localStorage.setItem('offline_orders', JSON.stringify(state.orders));
+        }
+    };
 
-    const render = () => {
-        if (!state.currentUser) {
-            loginPage.style.display = 'flex';
-            appContent.style.display = 'none';
-            saveState('currentUser', null);
-            saveState('cart', {}); // Hapus keranjang saat logout
+    const initApp = async () => {
+        toggleLoading(true, "Menghubungkan ke database...");
+        
+        // 1. Cek apakah konfigurasi masih placeholder
+        if (supabaseUrl.includes('gantidengan') || supabaseKey.includes('gantidengan')) {
+            console.warn("Supabase credentials belum diatur. Beralih ke Offline Mode.");
+            updateConnectionStatus(false);
+            loadLocalData();
+            toggleLoading(false);
             return;
         }
 
-        loginPage.style.display = 'none';
-        appContent.style.display = 'block';
-        welcomeMessage.textContent = Selamat Datang, ${state.currentUser.username}!;
+        try {
+            // 2. Coba Fetch Data dari Supabase
+            const { data: usersData, error: usersError } = await supabase.from('users').select('*');
+            if (usersError) throw usersError;
 
-        adminDashboard.style.display = 'none';
-        sellerDashboard.style.display = 'none';
-        studentDashboard.style.display = 'none';
+            const { data: menuData, error: menuError } = await supabase.from('menu').select('*').order('id', { ascending: true });
+            if (menuError) throw menuError;
 
-        switch (state.currentUser.role) {
-            case 'admin':
-                adminDashboard.style.display = 'block';
-                renderAdminDashboard();
-                break;
-            case 'seller':
-                sellerDashboard.style.display = 'block';
-                renderSellerDashboard();
-                break;
-            case 'student':
-                studentDashboard.style.display = 'block';
-                renderStudentDashboard();
-                break;
+            const { data: ordersData, error: ordersError } = await supabase.from('orders').select('*').order('timestamp', { ascending: true });
+            if (ordersError) throw ordersError;
+
+            // Jika berhasil, simpan ke state
+            state.users = usersData.reduce((acc, user) => { acc[user.username] = user; return acc; }, {});
+            state.menu = menuData;
+            state.orders = ordersData.map(o => ({
+                id: o.id,
+                user: o.user_name,
+                items: o.items,
+                total: o.total,
+                status: o.status,
+                timestamp: o.timestamp,
+                notes: o.notes,
+                deliveryOption: o.delivery_option
+            }));
+
+            updateConnectionStatus(true);
+            render();
+
+        } catch (error) {
+            console.error("Gagal koneksi Supabase:", error);
+            showToast('Koneksi database gagal. Beralih ke Mode Offline.', 'error');
+            updateConnectionStatus(false);
+            loadLocalData(); // Fallback ke data lokal
+        } finally {
+            toggleLoading(false);
         }
     };
 
-    const renderStudentDashboard = () => {
-        // Render Menu List
-        menuList.innerHTML = '';
-        state.menu.forEach(item => {
+    // --- DOM Selectors ---
+    const elements = {
+        loginPage: document.getElementById('login-page'),
+        appContent: document.getElementById('app-content'),
+        loginForm: document.getElementById('login-form'),
+        welcomeMessage: document.getElementById('welcome-message'),
+        adminDashboard: document.getElementById('admin-dashboard'),
+        sellerDashboard: document.getElementById('seller-dashboard'),
+        studentDashboard: document.getElementById('student-dashboard'),
+        menuList: document.getElementById('menu-list'),
+        cartItems: document.getElementById('cart-items'),
+        cartEmpty: document.getElementById('cart-empty'),
+        cartSummary: document.getElementById('cart-summary'),
+        cartTotal: document.getElementById('cart-total'),
+        orderHistory: document.getElementById('order-history'),
+        noOrderHistory: document.getElementById('no-order-history'),
+        sellerOrdersList: document.getElementById('seller-orders-list'),
+        sellerMenuList: document.getElementById('seller-menu-list'),
+        adminOrdersList: document.getElementById('admin-orders-list'),
+        userListTable: document.getElementById('user-list-table'),
+        adminStats: {
+            users: document.getElementById('admin-total-users'),
+            menu: document.getElementById('admin-total-menu'),
+            orders: document.getElementById('admin-total-orders')
+        }
+    };
+
+    // --- Formatting ---
+    const formatCurrency = (amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+
+    // --- Render Logic ---
+    const render = () => {
+        if (!state.currentUser) {
+            elements.loginPage.style.display = 'flex';
+            elements.loginPage.classList.remove('hidden');
+            elements.appContent.style.display = 'none';
+            return;
+        }
+
+        elements.loginPage.style.display = 'none';
+        elements.appContent.style.display = 'block';
+        elements.welcomeMessage.textContent = `Halo, ${state.currentUser.username}`;
+
+        elements.adminDashboard.classList.add('hidden');
+        elements.sellerDashboard.classList.add('hidden');
+        elements.studentDashboard.classList.add('hidden');
+
+        if (state.currentUser.role === 'admin') {
+            elements.adminDashboard.classList.remove('hidden');
+            renderAdmin();
+        } else if (state.currentUser.role === 'seller') {
+            elements.sellerDashboard.classList.remove('hidden');
+            renderSeller();
+        } else {
+            elements.studentDashboard.classList.remove('hidden');
+            renderStudent();
+        }
+    };
+
+    // --- Sub-Render Functions ---
+    const renderStudent = () => {
+        elements.menuList.innerHTML = state.menu.map(item => {
             const isOutOfStock = item.stock <= 0;
-            const card = document.createElement('div');
-            card.className = bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 ${isOutOfStock ? 'opacity-50' : ''};
-            card.innerHTML = `
-                <img src="${item.image}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.src='https://placehold.co/600x400/E0E0E0/777?text=Gambar+Error'">
-                <div class="p-4">
+            return `
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col ${isOutOfStock ? 'opacity-70' : ''}">
+                <img src="${item.image}" class="w-full h-40 object-cover" onerror="this.src='https://placehold.co/600x400/E0E0E0/777?text=No+Image'">
+                <div class="p-4 flex flex-col flex-grow">
                     <h3 class="font-bold text-lg">${item.name}</h3>
                     <p class="text-blue-600 font-semibold">${formatCurrency(item.price)}</p>
-                    <p class="text-sm text-gray-500">Stok: ${item.stock} | Penjual: ${item.seller}</p>
-                    <button data-id="${item.id}" class="add-to-cart-btn w-full mt-3 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" ${isOutOfStock ? 'disabled' : ''}>
-                        ${isOutOfStock ? 'Stok Habis' : '<i class="fa-solid fa-cart-plus mr-2"></i>Tambah'}
-                    </button>
+                    <div class="mt-auto pt-2">
+                        <p class="text-xs text-gray-500 mb-2">Stok: ${item.stock} | ${item.seller}</p>
+                        <button data-id="${item.id}" class="add-to-cart-btn w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" ${isOutOfStock ? 'disabled' : ''}>
+                            ${isOutOfStock ? 'Habis' : 'Tambah'}
+                        </button>
+                    </div>
                 </div>
-            `;
-            menuList.appendChild(card);
-        });
+            </div>`;
+        }).join('');
         renderCart();
-        renderOrderHistory();
+        
+        const myOrders = state.orders.filter(o => o.user === state.currentUser.username).slice().reverse();
+        if (myOrders.length === 0) {
+            elements.orderHistory.innerHTML = '';
+            elements.noOrderHistory.classList.remove('hidden');
+        } else {
+            elements.noOrderHistory.classList.add('hidden');
+            elements.orderHistory.innerHTML = myOrders.map(order => `
+                <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-gray-800">#${order.id}</span>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full border ${order.status === 'Selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${order.status}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-2">${new Date(order.timestamp).toLocaleString('id-ID')}</div>
+                    <div class="border-t border-dashed py-2 text-sm">
+                        ${order.items.map(i => `<div class="flex justify-between"><span>${i.name} (x${i.quantity})</span><span>${formatCurrency(i.price * i.quantity)}</span></div>`).join('')}
+                    </div>
+                    <div class="flex justify-between font-bold pt-2 border-t text-blue-600"><span>Total</span><span>${formatCurrency(order.total)}</span></div>
+                </div>
+            `).join('');
+        }
     };
 
     const renderCart = () => {
-        const cartKeys = Object.keys(state.cart);
-        if (cartKeys.length === 0) {
-            cartItems.innerHTML = '';
-            cartEmpty.style.display = 'block';
-            cartSummary.style.display = 'none';
+        const items = Object.entries(state.cart);
+        if (items.length === 0) {
+            elements.cartItems.innerHTML = '';
+            elements.cartEmpty.classList.remove('hidden');
+            elements.cartSummary.classList.add('hidden');
             return;
         }
-
-        cartEmpty.style.display = 'none';
-        cartSummary.style.display = 'block';
-        cartItems.innerHTML = '';
+        elements.cartEmpty.classList.add('hidden');
+        elements.cartSummary.classList.remove('hidden');
+        
         let total = 0;
-
-        cartKeys.forEach(itemId => {
-            const item = state.menu.find(m => m.id == itemId);
-            if (!item) {
-                // Hapus item dari keranjang jika tidak ada di menu (mungkin dihapus oleh admin/penjual)
-                delete state.cart[itemId];
-                saveState('cart', state.cart);
-                return;
-            }
-            const quantity = state.cart[itemId];
-            total += item.price * quantity;
-
-            const cartItemEl = document.createElement('div');
-            cartItemEl.className = 'flex items-center justify-between';
-            cartItemEl.innerHTML = `
-                <div>
-                    <p class="font-semibold">${item.name}</p>
-                    <p class="text-sm text-gray-600">${formatCurrency(item.price)}</p>
+        elements.cartItems.innerHTML = items.map(([id, qty]) => {
+            const item = state.menu.find(m => m.id == id);
+            if (!item) return ''; 
+            total += item.price * qty;
+            return `
+            <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                <div class="flex-1 text-sm font-semibold truncate">${item.name}</div>
+                <div class="flex items-center space-x-2 ml-2">
+                    <button data-id="${id}" data-change="-1" class="cart-btn w-6 h-6 bg-red-100 text-red-600 rounded">-</button>
+                    <span class="text-sm w-4 text-center">${qty}</span>
+                    <button data-id="${id}" data-change="1" class="cart-btn w-6 h-6 bg-green-100 text-green-600 rounded">+</button>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button data-id="${itemId}" data-change="-1" class="cart-quantity-btn w-6 h-6 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
-                    <span>${quantity}</span>
-                    <button data-id="${itemId}" data-change="1" class="cart-quantity-btn w-6 h-6 bg-gray-200 rounded-full font-bold hover:bg-gray-300">+</button>
-                </div>
-            `;
-            cartItems.appendChild(cartItemEl);
-        });
-
-        cartTotal.textContent = formatCurrency(total);
-    };
-    
-    const renderOrderHistory = () => {
-        const userOrders = state.orders.filter(o => o.user === state.currentUser.username);
-        if (userOrders.length === 0) {
-            orderHistory.innerHTML = '';
-            noOrderHistory.style.display = 'block';
-            return;
-        }
-        
-        noOrderHistory.style.display = 'none';
-        orderHistory.innerHTML = '';
-        userOrders.slice().reverse().forEach(order => {
-            const statusColor = order.status === 'Selesai' ? 'bg-green-100 text-green-800' : (order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800');
-            const orderEl = document.createElement('div');
-            orderEl.className = 'bg-white p-4 rounded-xl shadow-lg';
-            orderEl.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-bold">Pesanan #${order.id}</p>
-                        <p class="text-sm text-gray-500">${new Date(order.timestamp).toLocaleString('id-ID')}</p>
-                        <p class="text-sm mt-1">Opsi: <strong>${order.deliveryOption}</strong></p>
-                    </div>
-                    <span class="text-sm font-bold px-3 py-1 rounded-full ${statusColor}">${order.status}</span>
-                </div>
-                <div class="mt-3 border-t pt-3">
-                    ${order.items.map(item => `
-                        <div class="flex justify-between text-sm">
-                            <span>${item.name} (x${item.quantity})</span>
-                            <span>${formatCurrency(item.price * item.quantity)}</span>
-                        </div>
-                    `).join('')}
-                    <div class="flex justify-between font-bold mt-2">
-                        <span>Total</span>
-                        <span>${formatCurrency(order.total)}</span>
-                    </div>
-                     ${order.notes ? <div class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"><strong>Catatan:</strong> ${order.notes}</div> : ''}
-                </div>
-            `;
-            orderHistory.appendChild(orderEl);
-        });
+            </div>`;
+        }).join('');
+        elements.cartTotal.textContent = formatCurrency(total);
     };
 
-    const renderSellerDashboard = () => {
-        const seller = state.currentUser.username;
-        // Render Orders for Seller
-        sellerOrdersList.innerHTML = '';
-        const sellerOrders = state.orders.filter(order => order.items.some(item => item.seller === seller));
-        if (sellerOrders.length === 0) {
-            sellerOrdersList.innerHTML = <p class="text-gray-500 lg:col-span-2">Belum ada pesanan masuk.</p>;
+    const renderSeller = () => {
+        const sellerName = state.currentUser.username;
+        const myMenu = state.menu.filter(m => m.seller === sellerName);
+        const myOrders = state.orders.filter(o => o.items.some(i => i.seller === sellerName)).slice().reverse();
+
+        if (myOrders.length === 0) {
+            elements.sellerOrdersList.innerHTML = '<p class="text-gray-500 col-span-full text-center">Tidak ada pesanan.</p>';
         } else {
-             sellerOrders.slice().reverse().forEach(order => {
-                const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-xl shadow-lg space-y-2';
-                card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-bold">Pesanan #${order.id}</h4>
-                        <span class="text-sm font-semibold">${order.status}</span>
+            elements.sellerOrdersList.innerHTML = myOrders.map(order => {
+                const isDone = order.status === 'Selesai';
+                return `
+                <div class="bg-white p-4 rounded-xl shadow-lg border-l-4 ${isDone ? 'border-green-500' : 'border-yellow-500'}">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-bold">#${order.id}</h4>
+                        <span class="text-xs px-2 py-1 rounded bg-gray-100 font-bold">${order.status}</span>
                     </div>
-                    <p class="text-sm">Pemesan: ${order.user}</p>
-                    <p class="text-sm">Opsi: <strong>${order.deliveryOption}</strong></p>
-                    <div class="border-t pt-2">
-                        ${order.items.filter(i => i.seller === seller).map(item => `
-                            <p class="text-sm">${item.name} x ${item.quantity}</p>
-                        `).join('')}
+                    <div class="text-sm text-gray-600 mb-2">User: ${order.user} | ${order.deliveryOption}</div>
+                    <div class="bg-gray-50 p-2 rounded text-sm mb-2">
+                        ${order.items.filter(i => i.seller === sellerName).map(i => `<div>${i.name} x${i.quantity}</div>`).join('')}
                     </div>
-                    ${order.notes ? <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"><strong>Catatan:</strong> ${order.notes}</div> : ''}
-                    ${order.status === 'Diproses' ? `
-                    <div class="flex space-x-2 mt-2">
-                        <button data-id="${order.id}" data-status="Selesai" class="update-status-btn w-full text-sm py-1 font-semibold text-white bg-green-500 rounded-lg hover:bg-green-600">Selesaikan</button>
-                    </div>
-                    ` : <p class="text-sm text-green-600 font-semibold mt-2">Pesanan sudah selesai.</p>}
-                `;
-                sellerOrdersList.appendChild(card);
-            });
+                    ${!isDone ? `<button data-id="${order.id}" class="complete-order-btn w-full text-sm py-2 bg-green-500 text-white rounded hover:bg-green-600">Tandai Selesai</button>` : ''}
+                </div>`;
+            }).join('');
         }
-        
-        // Render Seller's Menu List
-        sellerMenuList.innerHTML = '';
-        const sellerMenus = state.menu.filter(item => item.seller === seller);
-        sellerMenus.forEach(item => {
-            const menuCard = document.createElement('div');
-            menuCard.className = 'bg-white p-4 rounded-xl shadow-lg flex flex-col';
-            menuCard.innerHTML = `
-                <img src="${item.image}" class="w-full h-32 object-cover rounded-lg mb-2" onerror="this.src='https://placehold.co/600x400/E0E0E0/777?text=Gambar+Error'">
-                <h4 class="font-bold">${item.name}</h4>
-                <div class="mt-2 flex-grow space-y-2">
-                     <div>
-                        <label for="price-${item.id}" class="text-xs font-medium">Harga (Rp)</label>
-                        <input type="number" id="price-${item.id}" value="${item.price}" class="w-full border rounded px-2 py-1 text-sm">
-                     </div>
-                     <div>
-                        <label for="stock-${item.id}" class="text-xs font-medium">Stok</label>
-                        <input type="number" id="stock-${item.id}" value="${item.stock}" class="w-full border rounded px-2 py-1 text-sm">
-                     </div>
+
+        elements.sellerMenuList.innerHTML = myMenu.map(item => `
+            <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-bold truncate w-2/3">${item.name}</h4>
+                    <span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">Stok: ${item.stock}</span>
                 </div>
-                <button data-id="${item.id}" class="update-menu-btn w-full mt-3 py-1.5 text-sm font-semibold bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Update Menu</button>
-            `;
-            sellerMenuList.appendChild(menuCard);
-        });
-    };
-    
-    const renderAdminDashboard = () => {
-        adminTotalUsers.textContent = Object.keys(state.users).length;
-        adminTotalMenu.textContent = state.menu.length;
-        adminTotalOrders.textContent = state.orders.length;
-        
-        adminOrdersList.innerHTML = '';
-        if (state.orders.length === 0) {
-            adminOrdersList.innerHTML = '<p class="text-gray-500">Belum ada pesanan.</p>';
-        } else {
-            [...state.orders].reverse().forEach(order => {
-                const statusColor = order.status === 'Selesai' ? 'bg-green-100 text-green-800' : (order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800');
-                const orderEl = document.createElement('div');
-                orderEl.className = 'bg-gray-50 p-3 rounded-lg';
-                orderEl.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="font-bold">Pesanan #${order.id} oleh ${order.user}</p>
-                            <p class="text-xs text-gray-500">${new Date(order.timestamp).toLocaleString('id-ID')}</p>
-                        </div>
-                         <span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${order.status}</span>
-                    </div>
-                    <p class="text-sm mt-1">Total: ${formatCurrency(order.total)}</p>
-                `;
-                adminOrdersList.appendChild(orderEl);
-            });
-        }
-        renderUserManagement();
+                <div class="space-y-2">
+                    <input type="number" id="stock-${item.id}" value="${item.stock}" class="w-full text-sm border rounded px-2 py-1" placeholder="Update Stok">
+                    <button data-id="${item.id}" class="update-stock-btn w-full text-xs py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Update Stok</button>
+                </div>
+            </div>
+        `).join('');
     };
 
-    const renderUserManagement = () => {
-        userListTable.innerHTML = '';
-        for (const username in state.users) {
-            if (username === 'admin') continue; // Admin cannot manage their own account
-            const user = state.users[username];
-            const row = document.createElement('tr');
-            row.className = 'border-b';
-            row.innerHTML = `
-                <td class="py-3 px-4">${username}</td>
-                <td class="py-3 px-4 capitalize">${user.role}</td>
-                <td class="py-3 px-4">
-                    <input type="text" id="password-${username}" value="${user.password}" class="w-full border rounded px-2 py-1 text-sm">
-                </td>
-                <td class="py-3 px-4 flex space-x-2">
-                    <button data-username="${username}" class="update-user-btn text-sm py-1 px-3 bg-blue-500 text-white rounded hover:bg-blue-600">Update</button>
-                    <button data-username="${username}" class="delete-user-btn text-sm py-1 px-3 bg-red-500 text-white rounded hover:bg-red-600">Hapus</button>
-                </td>
-            `;
-            userListTable.appendChild(row);
-        }
+    const renderAdmin = () => {
+        elements.adminStats.users.textContent = Object.keys(state.users).length;
+        elements.adminStats.menu.textContent = state.menu.length;
+        elements.adminStats.orders.textContent = state.orders.length;
+
+        elements.adminOrdersList.innerHTML = state.orders.slice().reverse().map(o => `
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                <div><span class="font-bold">#${o.id}</span> - ${o.user}</div>
+                <div><span class="font-bold text-blue-600">${formatCurrency(o.total)}</span> <span class="text-xs bg-white px-2 border rounded ml-2">${o.status}</span></div>
+            </div>
+        `).join('');
+
+        elements.userListTable.innerHTML = Object.values(state.users).map(u => `
+            <tr class="border-b">
+                <td class="py-3 px-4">${u.username}</td>
+                <td class="py-3 px-4"><span class="px-2 py-1 rounded-full text-xs bg-gray-100 font-bold">${u.role}</span></td>
+                <td class="py-3 px-4"><button data-username="${u.username}" class="delete-user-btn text-xs bg-red-500 text-white px-2 py-1 rounded">Hapus</button></td>
+            </tr>
+        `).join('');
     };
 
-    // === EVENT LISTENERS & HANDLERS ===
-    loginTabs.addEventListener('click', (e) => {
-        if(e.target.matches('.tab-btn')) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            loginRoleInput.value = e.target.dataset.role;
-        }
-    });
+    // --- EVENT LISTENERS ---
 
-    loginForm.addEventListener('submit', (e) => {
+    // Login
+    elements.loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = e.target.username.value;
         const password = e.target.password.value;
-        const role = loginRoleInput.value;
+        const role = document.getElementById('login-role').value;
+        
         const user = state.users[username];
-
         if (user && user.password === password && user.role === role) {
-            state.currentUser = { username, role: user.role };
-            loginError.classList.add('hidden');
-            loginForm.reset();
-            // Kembalikan tab ke Siswa
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.tab-btn[data-role="student"]').classList.add('active');
-            loginRoleInput.value = 'student';
-            
-            saveState('currentUser', state.currentUser);
-            // Muat keranjang pengguna jika ada, atau reset
-            state.cart = loadState(cart_${username}, {}); 
-            saveState('cart', state.cart); // Simpan state keranjang saat ini
-            
+            state.currentUser = user;
+            localStorage.setItem('currentUser', JSON.stringify(user));
             render();
+            showToast(`Selamat datang, ${username}`, 'success');
         } else {
-            loginError.classList.remove('hidden');
+            showToast('Login gagal. Periksa username/password/peran', 'error');
         }
     });
 
-    logoutBtn.addEventListener('click', () => {
-        // Simpan keranjang pengguna sebelum logout
-        if (state.currentUser) {
-            saveState(cart_${state.currentUser.username}, state.cart);
-        }
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
         state.currentUser = null;
         state.cart = {};
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('cart');
         render();
+        showToast('Logout berhasil');
     });
 
-    // --- Student Dashboard Listeners ---
-    menuList.addEventListener('click', (e) => {
-        if (e.target.matches('.add-to-cart-btn')) {
-            const id = e.target.dataset.id;
-            const item = state.menu.find(m => m.id == id);
-            
-            // Cek stok
-            const currentQuantityInCart = state.cart[id] || 0;
-            if (currentQuantityInCart >= item.stock) {
-                // Tampilkan pesan stok tidak cukup (bisa diganti modal)
-                console.warn("Stok tidak mencukupi");
-                return;
-            }
+    document.getElementById('login-tabs').addEventListener('click', (e) => {
+        if (e.target.classList.contains('tab-btn')) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('login-role').value = e.target.dataset.role;
+        }
+    });
 
+    // Global Clicks (CRUD Logic with Offline/Online Branching)
+    document.addEventListener('click', async (e) => {
+        const target = e.target;
+
+        // Add to Cart
+        if (target.closest('.add-to-cart-btn')) {
+            const id = target.closest('.add-to-cart-btn').dataset.id;
+            const item = state.menu.find(m => m.id == id);
+            if (state.cart[id] && state.cart[id] >= item.stock) {
+                showToast('Stok tidak mencukupi', 'error'); return;
+            }
             state.cart[id] = (state.cart[id] || 0) + 1;
-            saveState('cart', state.cart);
+            localStorage.setItem('cart', JSON.stringify(state.cart));
             renderCart();
         }
-    });
 
-    cartItems.addEventListener('click', (e) => {
-        if (e.target.matches('.cart-quantity-btn')) {
-            const id = e.target.dataset.id;
-            const change = parseInt(e.target.dataset.change, 10);
+        // Cart Quantity
+        if (target.classList.contains('cart-btn')) {
+            const id = target.dataset.id;
+            const change = parseInt(target.dataset.change);
+            state.cart[id] += change;
+            if (state.cart[id] <= 0) delete state.cart[id];
+            localStorage.setItem('cart', JSON.stringify(state.cart));
+            renderCart();
+        }
+
+        // Checkout
+        if (target.id === 'checkout-btn') {
+            if (Object.keys(state.cart).length === 0) return;
+            toggleLoading(true, "Memproses Pesanan...");
             
-            if (change === 1) {
-                const item = state.menu.find(m => m.id == id);
-                const currentQuantityInCart = state.cart[id] || 0;
-                if (currentQuantityInCart < item.stock) {
-                    state.cart[id] = (state.cart[id] || 0) + 1;
+            try {
+                const orderItems = [];
+                let total = 0;
+                
+                for (const [id, qty] of Object.entries(state.cart)) {
+                    const item = state.menu.find(m => m.id == id);
+                    if (item.stock < qty) throw new Error(`Stok ${item.name} habis!`);
+                    
+                    orderItems.push({ ...item, quantity: qty });
+                    total += item.price * qty;
+                }
+
+                const newOrder = {
+                    id: Date.now().toString().slice(-6),
+                    user_name: state.currentUser.username,
+                    items: orderItems,
+                    total: total,
+                    status: 'Diproses',
+                    timestamp: new Date().toISOString(),
+                    notes: document.getElementById('order-notes').value,
+                    delivery_option: document.querySelector('input[name="delivery-option"]:checked').value
+                };
+
+                // --- BRANCHING LOGIC ---
+                if (isOfflineMode) {
+                    // OFFLINE LOGIC
+                    state.orders.push({
+                        ...newOrder,
+                        user: newOrder.user_name,
+                        deliveryOption: newOrder.delivery_option
+                    });
+                    // Update stock locally
+                    orderItems.forEach(item => {
+                         const menuIdx = state.menu.findIndex(m => m.id == item.id);
+                         if(menuIdx > -1) state.menu[menuIdx].stock -= item.quantity;
+                    });
+                    saveLocalData();
+                    showToast('Pesanan berhasil (Mode Offline)!', 'success');
                 } else {
-                    console.warn("Stok tidak mencukupi");
+                    // ONLINE LOGIC
+                    // 1. Update Stock
+                    for (const item of orderItems) {
+                         const { error: stockError } = await supabase.from('menu').update({ stock: item.stock - item.quantity }).eq('id', item.id);
+                         if (stockError) throw stockError;
+                    }
+                    // 2. Insert Order
+                    const { error: orderError } = await supabase.from('orders').insert([newOrder]);
+                    if (orderError) throw orderError;
+                    
+                    showToast('Pesanan berhasil (Online)!', 'success');
+                    await initApp(); // Refresh data
                 }
-            } else if (change === -1) {
-                state.cart[id] = (state.cart[id] || 0) - 1;
-                if (state.cart[id] <= 0) {
-                    delete state.cart[id];
+
+                state.cart = {};
+                localStorage.setItem('cart', JSON.stringify({}));
+                if(isOfflineMode) render(); // Re-render manual if offline
+
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Gagal memproses pesanan', 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Update Stock (Seller)
+        if (target.classList.contains('update-stock-btn')) {
+            const id = target.dataset.id;
+            const newStock = parseInt(document.getElementById(`stock-${id}`).value);
+            
+            if (isOfflineMode) {
+                const idx = state.menu.findIndex(m => m.id == id);
+                if(idx > -1) {
+                    state.menu[idx].stock = newStock;
+                    saveLocalData();
+                    renderSeller();
+                    showToast('Stok diupdate (Offline)', 'success');
+                }
+            } else {
+                toggleLoading(true);
+                const { error } = await supabase.from('menu').update({ stock: newStock }).eq('id', id);
+                if (!error) {
+                    showToast('Stok diupdate', 'success');
+                    await initApp();
+                } else {
+                    showToast('Gagal update stok', 'error');
+                }
+                toggleLoading(false);
+            }
+        }
+
+        // Complete Order (Seller)
+        if (target.classList.contains('complete-order-btn')) {
+            const id = target.dataset.id;
+            
+            if (isOfflineMode) {
+                const order = state.orders.find(o => o.id == id);
+                if(order) {
+                    order.status = 'Selesai';
+                    saveLocalData();
+                    renderSeller();
+                    showToast('Pesanan selesai (Offline)', 'success');
+                }
+            } else {
+                toggleLoading(true);
+                const { error } = await supabase.from('orders').update({ status: 'Selesai' }).eq('id', id);
+                if (!error) {
+                    showToast('Pesanan selesai', 'success');
+                    await initApp();
+                } else {
+                    showToast('Gagal update status', 'error');
+                }
+                toggleLoading(false);
+            }
+        }
+
+        // Delete User (Admin)
+        if (target.classList.contains('delete-user-btn')) {
+            const username = target.dataset.username;
+            if (confirm(`Hapus user ${username}?`)) {
+                if (isOfflineMode) {
+                    delete state.users[username];
+                    saveLocalData();
+                    renderAdmin();
+                    showToast('User dihapus (Offline)', 'success');
+                } else {
+                    toggleLoading(true);
+                    const { error } = await supabase.from('users').delete().eq('username', username);
+                    if (!error) {
+                        showToast('User dihapus', 'success');
+                        await initApp();
+                    } else {
+                        showToast('Gagal hapus user', 'error');
+                    }
+                    toggleLoading(false);
                 }
             }
-            saveState('cart', state.cart);
-            renderCart();
         }
     });
 
-    checkoutBtn.addEventListener('click', () => {
-        const orderItems = Object.keys(state.cart).map(id => {
-            const item = state.menu.find(m => m.id == id);
-            return { ...item, quantity: state.cart[id] };
-        });
-
-        const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-        // Validasi stok
-        let isStockSufficient = true;
-        orderItems.forEach(orderItem => {
-            const menuItem = state.menu.find(m => m.id == orderItem.id);
-            if (orderItem.quantity > menuItem.stock) {
-                isStockSufficient = false;
-                console.error(Stok ${menuItem.name} tidak mencukupi.);
-                // Di aplikasi nyata, tampilkan pesan error ke pengguna
-            }
-        });
-
-        if (!isStockSufficient) {
-            alert("Maaf, stok untuk beberapa barang tidak mencukupi. Harap perbarui keranjang Anda.");
-            return;
-        }
-
-        // Kurangi stok
-        orderItems.forEach(orderItem => {
-            const menuItem = state.menu.find(m => m.id == orderItem.id);
-            menuItem.stock -= orderItem.quantity;
-        });
-        saveState('menu', state.menu);
-
-        const newOrder = {
-            id: Date.now(),
-            user: state.currentUser.username,
-            items: orderItems,
-            total: total,
-            status: 'Diproses', // Status awal
-            notes: document.getElementById('order-notes').value,
-            deliveryOption: document.querySelector('input[name="delivery-option"]:checked').value,
-            timestamp: new Date().toISOString()
-        };
-
-        state.orders.push(newOrder);
-        saveState('orders', state.orders);
-
-        state.cart = {};
-        saveState('cart', state.cart);
-        if (state.currentUser) {
-            saveState(cart_${state.currentUser.username}, state.cart); // Hapus keranjang tersimpan
-        }
-        
-        document.getElementById('order-notes').value = ''; // Kosongkan catatan
-        document.querySelector('input[name="delivery-option"][value="Diambil"]').checked = true; // Reset opsi
-
-        // Render ulang bagian siswa
-        renderStudentDashboard();
-    });
-
-
-    // --- Seller Dashboard Listeners ---
-    addMenuForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newMenu = {
-            id: Date.now(),
-            name: document.getElementById('menu-name').value,
-            price: parseInt(document.getElementById('menu-price').value, 10),
-            stock: parseInt(document.getElementById('menu-stock').value, 10),
-            image: document.getElementById('menu-image').value,
-            seller: state.currentUser.username
-        };
-        state.menu.push(newMenu);
-        saveState('menu', state.menu);
-        addMenuForm.reset();
-        renderSellerDashboard();
-    });
-
-    sellerOrdersList.addEventListener('click', (e) => {
-        if (e.target.matches('.update-status-btn')) {
-            const orderId = e.target.dataset.id;
-            const newStatus = e.target.dataset.status;
-            const order = state.orders.find(o => o.id == orderId);
-            if (order) {
-                order.status = newStatus;
-                saveState('orders', state.orders);
-                renderSellerDashboard();
-            }
-        }
-    });
-
-    sellerMenuList.addEventListener('click', (e) => {
-        if (e.target.matches('.update-menu-btn')) {
-            const itemId = e.target.dataset.id;
-            const item = state.menu.find(m => m.id == itemId);
-            if (item) {
-                const newPrice = document.getElementById(price-${itemId}).value;
-                const newStock = document.getElementById(stock-${itemId}).value;
-                
-                item.price = parseInt(newPrice, 10);
-                item.stock = parseInt(newStock, 10);
-                
-                saveState('menu', state.menu);
-                renderSellerDashboard();
-            }
-        }
-    });
-
-    // --- Admin Dashboard Listeners ---
-    addUserForm.addEventListener('submit', (e) => {
+    // Add User (Admin)
+    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('new-username').value;
         const password = document.getElementById('new-password').value;
         const role = document.getElementById('new-role').value;
-
-        if (state.users[username]) {
-            alert("Username sudah ada!");
-            return;
-        }
-
-        state.users[username] = { password, role };
-        saveState('users', state.users);
-        addUserForm.reset();
-        renderAdminDashboard();
-    });
-
-    userListTable.addEventListener('click', (e) => {
-        const username = e.target.dataset.username;
-        if (!username) return;
-
-        if (e.target.matches('.update-user-btn')) {
-            const newPassword = document.getElementById(password-${username}).value;
-            if (state.users[username]) {
-                state.users[username].password = newPassword;
-                saveState('users', state.users);
-                renderUserManagement(); // Cukup render tabel
+        
+        if (isOfflineMode) {
+             state.users[username] = { username, password, role };
+             saveLocalData();
+             e.target.reset();
+             renderAdmin();
+             showToast('User ditambah (Offline)', 'success');
+        } else {
+            toggleLoading(true);
+            const { error } = await supabase.from('users').insert([{ username, password, role }]);
+            if (!error) {
+                e.target.reset();
+                showToast('User ditambah', 'success');
+                await initApp();
+            } else {
+                showToast('Gagal tambah user (mungkin duplikat)', 'error');
             }
-        }
-
-        if (e.target.matches('.delete-user-btn')) {
-            // Sebaiknya gunakan konfirmasi kustom, tapi untuk sekarang pakai confirm()
-            if (confirm(Yakin ingin menghapus pengguna ${username}?)) {
-                 if (state.users[username]) {
-                    delete state.users[username];
-                    saveState('users', state.users);
-                    renderAdminDashboard(); // Render ulang semua
-                }
-            }
+            toggleLoading(false);
         }
     });
 
-    // === INITIAL RENDER ===
-    render();
+    // Add Menu (Seller)
+    document.getElementById('add-menu-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const item = {
+            id: isOfflineMode ? Date.now() : undefined, // ID generated by DB if online
+            name: document.getElementById('menu-name').value,
+            price: parseInt(document.getElementById('menu-price').value),
+            stock: parseInt(document.getElementById('menu-stock').value),
+            image: document.getElementById('menu-image').value,
+            seller: state.currentUser.username
+        };
+
+        if (isOfflineMode) {
+            state.menu.push(item);
+            saveLocalData();
+            e.target.reset();
+            renderSeller();
+            showToast('Menu ditambah (Offline)', 'success');
+        } else {
+            toggleLoading(true);
+            const { error } = await supabase.from('menu').insert([item]);
+            if (!error) {
+                e.target.reset();
+                showToast('Menu ditambah', 'success');
+                await initApp();
+            } else {
+                showToast('Gagal tambah menu', 'error');
+            }
+            toggleLoading(false);
+        }
+    });
+
+    // Start App
+    initApp();
 });
 </script>
-
 </body>
 </html>
